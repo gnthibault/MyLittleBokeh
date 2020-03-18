@@ -6,13 +6,23 @@ import random
 
 import bokeh
 import bokeh.application as bokeh_app
-import tornado.web
+
 from bokeh.application.handlers import FunctionHandler
 from bokeh.document import Document
-from bokeh.embed import server_session, server_document
-from bokeh.layouts import column, widgetbox
+from bokeh.embed import server_document
+from bokeh.layouts import column
+
 from bokeh.models import ColumnDataSource, Button, TableColumn, DateFormatter, DataTable
-from tornado import gen
+#from bokeh.plotting import figure, output_file, show
+
+
+
+
+
+
+import tornado.web
+# authenticate decorator is = if not self.current_user: self.redirect()
+from tornado.web import authenticated
 
 data_by_user = defaultdict(lambda: dict(file_names=[], dates=[], downloads=[]))
 doc_by_user_str = dict()
@@ -24,28 +34,19 @@ class BaseHandler(tornado.web.RequestHandler):
     def get_current_user(self):
         return self.get_secure_cookie("user")
 
-
-    def get(self):
-        if not self.current_user:
-            self.redirect("/login")
-            return
-        name = tornado.escape.xhtml_escape(self.current_user)
-        self.write("Hello, " + name)
-
 class LoginHandler(BaseHandler):
     def get(self):
-        self.write('<html><body><form action="/login" method="post">'
-                   'Name: <input type="text" name="name">'
-                   '<input type="submit" value="Sign in">'
-                   '</form></body></html>')
+        self.render(
+                'login_template.html',
+        )
 
     def post(self):
         self.set_secure_cookie("user", self.get_argument("name"))
         self.redirect("/")
 
 class MainHandler(BaseHandler):
-    @staticmethod
-    def modify_doc(doc):
+    def modify_document(self, doc):
+        print("MODIFY DOCUMENT")
         source = ColumnDataSource(dict(x=[], y=[]))
 
         columns = [
@@ -59,7 +60,7 @@ class MainHandler(BaseHandler):
         doc_by_user_str[user_str] = doc
         source_by_user_str[user_str] = source
         
-        doc.add_root(widgetbox(data_table))
+        doc.add_root(bokeh.models.Column(data_table))
 
     _bokeh_app = None
 
@@ -69,16 +70,14 @@ class MainHandler(BaseHandler):
             cls._bokeh_app = bokeh.application.Application(FunctionHandler(MainHandler.modify_doc))
         return cls._bokeh_app
 
-    @gen.coroutine
+    #@gen.coroutine
+    @authenticated
     def get(self):
-        if not self.current_user:
-            self.redirect("/login")
-            return
-        user_str = str(self.current_user)
+        user_str = tornado.escape.xhtml_escape(self.current_user)
         print(f"THE STRING IS {self.current_user}")
-        script = server_session(model=None, session_id=user_str,  # NOTE: MUST be string
-                                         url='http://localhost:5006')
-       #                  app_path='/bokeh/app',
+        #script = server_session(model=None, session_id=user_str,
+        #                        url='http://localhost:5006/bokeh/app')
+        script = server_document(url='http://localhost:5006/bokeh/app')
 
         self.render(
                 'main_page_template.html', active_page='inks_upload',
@@ -89,9 +88,12 @@ class SecondHandler(tornado.web.RequestHandler):
     def get(self):
         self.render("second_page_template.html")
 
-    @gen.coroutine
+    #@gen.coroutine
+    @authenticated
     def post(self, *args, **kwargs):
-        user_str = str(self.current_user)
+        print(f"NOW IN SecondHandler !!!")
+        user_str = tornado.escape.xhtml_escape(self.current_user)
+        print(f"SecondHandler str {user_str}")
 
         data['x'] = random.sample(range(10), 10)
         data['y'] = random.sample(range(10), 10)
