@@ -19,7 +19,7 @@ tornado.options.define("port",
                        type=int)
 
 
-class Application(tornado.web.Application):
+class TornadoApplication(tornado.web.Application):
     def __init__(self):
         handlers = [
             (r"/", MainHandler),
@@ -36,13 +36,13 @@ class Application(tornado.web.Application):
                 login_url="/login", # redirect() will go there
                 debug=True,
         )
-        super(Application, self).__init__(handlers, **settings)
+        super().__init__(handlers, **settings)
 
 
 
 if __name__ == '__main__':
     # First instantiate main tornado infrastructure
-    http_server = tornado.httpserver.HTTPServer(Application())
+    http_server = tornado.httpserver.HTTPServer(TornadoApplication())
     http_server.listen(tornado.options.options.port)
     io_loop = tornado.ioloop.IOLoop.current()
 

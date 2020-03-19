@@ -13,7 +13,7 @@ import bokeh
 
 from bokeh.application.handlers import FunctionHandler
 from bokeh.document import Document
-from bokeh.embed import server_document
+from bokeh.embed import server_document, server_session
 from bokeh.layouts import column
 
 from bokeh.models import ColumnDataSource, Button, TableColumn, DateFormatter, DataTable
@@ -65,20 +65,21 @@ def bokeh_app_old(doc):
     #doc.theme = Theme(filename="theme.yaml")
 
 def bokeh_app(doc):
-        source = ColumnDataSource(dict(x=[], y=[]))
+    #print(f"COOKIES ARE {doc._session_context._server_context.application_context._server_context.application_context.__dict__}")
+    source = ColumnDataSource(dict(x=[], y=[]))
 
-        columns = [
-            TableColumn(field="x", title="X"),
-            TableColumn(field="y", title="Y"),
-        ]
+    columns = [
+        TableColumn(field="x", title="X"),
+        TableColumn(field="y", title="Y"),
+    ]
 
-        data_table = DataTable(source=source, columns=columns)
-        user_str = doc.session_context.id
-        print(f"BOKEH APP STR IS {user_str}")
-        doc_by_user_str[user_str] = doc
-        source_by_user_str[user_str] = source
-        
-        doc.add_root(bokeh.models.Column(data_table))
+    data_table = DataTable(source=source, columns=columns)
+    user_str = doc.session_context.id
+    print(f"BOKEH APP STR IS {user_str}")
+    doc_by_user_str[user_str] = doc
+    source_by_user_str[user_str] = source
+    
+    doc.add_root(bokeh.models.Column(data_table))
 
 class MainHandler(BaseHandler):
 #    def modify_document(self, doc):
@@ -112,15 +113,9 @@ class MainHandler(BaseHandler):
         user_str = tornado.escape.xhtml_escape(self.current_user)
         print(f"MAIN HANDLER THE STRING IS {self.current_user}")
         print(f"MAIN HANDLER {self.get_cookie('user')}")
-        #script = server_session(model=None, session_id=user_str,
-        #                        url='http://localhost:5006/bokeh/app')
-        #script = server_document(url='http://localhost:5006/bokeh/app')
-
-        #self.render(
-        #        'main_page_template.html', active_page='inks_upload',
-        #        script=script
-        #)
-        script = server_document('http://localhost:5006/bokeh_app')
+        script = server_session(session_id=user_str,
+                                url='http://localhost:5006/bokeh_app')
+        #script = server_document(url='http://localhost:5006/bokeh_app')
         self.render(
                 'main_page_template.html',
                 script=script
@@ -135,6 +130,8 @@ class SecondHandler(BaseHandler):
     def post(self, *args, **kwargs):
         user_str = tornado.escape.xhtml_escape(self.current_user)
         print(f"SecondHandler str {user_str}")
+        for k,v in doc_by_user_str.items():
+            print(f"SecondHandler doc dict has {k}:{v}")
 
         data['x'] = random.sample(range(10), 10)
         data['y'] = random.sample(range(10), 10)
