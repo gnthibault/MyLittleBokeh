@@ -9,14 +9,12 @@ import tornado
 import bokeh
 from bokeh.models import ColumnDataSource, Button, TableColumn, DateFormatter, DataTable
 
-
-import tornado.web
+# Numerical stuff
+import numpy as np
 
 data_by_user = defaultdict(lambda: dict(file_names=[], dates=[], downloads=[]))
 doc_by_user_str = dict()
 source_by_user_str = dict()
-
-data = dict(x=[], y=[])
 
 class BaseHandler(tornado.web.RequestHandler):
     def get_current_user(self):
@@ -73,14 +71,15 @@ class SecondHandler(BaseHandler):
         user_str = tornado.escape.xhtml_escape(self.current_user)
         print(f"SecondHandler str {user_str}")
 
-        data['x'] = random.sample(range(10), 10)
-        data['y'] = random.sample(range(10), 10)
+        data = {}
+        data['x'] = [np.random.rand()]
+        data['y'] = [np.random.rand()]
 
         data_by_user[user_str] = data
         source = source_by_user_str[user_str]
         @tornado.gen.coroutine
         def update():
-            source.data = data
+            source.stream(data, rollover=16384)
         doc = doc_by_user_str[user_str]  # type: Document
         doc.add_next_tick_callback(update)  
         self.render('second_page_template.html')
