@@ -4,13 +4,10 @@ import os.path
 # Web stuff
 import tornado
 import tornado.options
-import bokeh
 from bokeh.server.server import Server
-from bokeh.util.browser import view
 
 # Local handlers
 from handlers.handlers import MainHandler, LoginHandler, bokeh_app, SecondHandler
-#from handlers.handlers import MainHandler, LoginHandler, SecondHandler
 
 # Parametrize tornado
 tornado.options.define("port",
@@ -50,8 +47,5 @@ if __name__ == '__main__':
     bokeh_server = Server({'/bokeh_app': bokeh_app},
                           io_loop=io_loop,
                           allow_websocket_origin=['localhost:8888'])
-    #bokeh_server.start()
-
     # Launch the whole thing
-    #io_loop.add_callback(view, "http://localhost:8888/main_page")
     io_loop.start()
