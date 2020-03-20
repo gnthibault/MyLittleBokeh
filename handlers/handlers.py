@@ -5,7 +5,7 @@ from datetime import datetime
 # web stuff
 import tornado
 import bokeh
-from bokeh.models import ColumnDataSource, TableColumn, DateFormatter, DataTable, NumeralTickFormatter
+from bokeh.models import ColumnDataSource, TableColumn, DateFormatter, DataTable, DatetimeTickFormatter
 from bokeh.plotting import figure
 from bokeh.models.tools import HoverTool
 
@@ -53,6 +53,8 @@ def bokeh_app(doc):
     p.ygrid.grid_line_color = None
     #Add X axis label
     p.xaxis.axis_label = "Date"
+    #https://docs.bokeh.org/en/latest/docs/reference/models/formatters.html#bokeh.models.formatters.DatetimeTickFormatter
+    p.xaxis.formatter=DatetimeTickFormatter()
     #Add Y axis Label
     p.yaxis.axis_label = "Value"
     #Set Title configuration
@@ -65,12 +67,13 @@ def bokeh_app(doc):
     #Change X axis orientation label
     #p.xaxis.major_label_orientation = 1.2
     #------------Hover configuration -----------------#
-    TOOLTIPS = [
-        ("Date", "($x{0,0.00})"),
-        ("Value", "($y{0,0.00})"),
-    ]
+    #https://docs.bokeh.org/en/latest/docs/user_guide/tools.html?highlight=hover#basic-tooltips
     # Add the HoverTool to the figure for showing spectrum values
-    p.add_tools(HoverTool(tooltips=TOOLTIPS, mode='vline'))
+    p.add_tools(HoverTool(tooltips=[
+                                    ("Date", "@x{%H:%M}"),
+                                    ("Value", "@y{0.00}")],
+                          formatters={'@x': 'datetime'},
+                          mode='vline'))
     # Plot actual data
     p.line('x', 'y',  source=source, legend_label='My variable of interest')
     #Set legen configuration (position and show/hide)
