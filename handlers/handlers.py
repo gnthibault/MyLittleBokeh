@@ -14,7 +14,6 @@ from bokeh.models.tools import HoverTool
 # Numerical stuff
 import numpy as np
 
-data_by_user = defaultdict(lambda: dict(file_names=[], dates=[], downloads=[]))
 doc_by_user_str = dict()
 source_by_user_str = dict()
 
@@ -113,7 +112,6 @@ class SecondHandler(BaseHandler):
         data['x'] = [datetime.now()]
         data['y'] = [np.random.rand()]
 
-        data_by_user[user_str] = data
         source = source_by_user_str[user_str]
         @tornado.gen.coroutine
         def update():
